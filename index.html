@@ -277,6 +277,11 @@ footer a { color: var(--accent); }
           <option value="bcr-standard" selected>BCR Casa Mea — standard (6.19% fix 3 ani, apoi IRCC+3.5%)</option>
           <option value="bcr-max">BCR Casa Mea — venit ≥10k & MAX (4.99% fix 3 ani, apoi IRCC+2.3%)</option>
           <option value="bcr-natura">BCR Casa Mea Natura — verde, MAX (4.79% fix 3 ani, apoi IRCC+2.1%)</option>
+          <option value="ing-var">ING — variabilă din start, salariu+asigurări (IRCC+1.55%)</option>
+          <option value="ing-fix5">ING — 5.95% fix 5 ani, apoi IRCC+2%</option>
+          <option value="cec">CEC — 5.95% fix 5 ani, apoi IRCC+2.5%</option>
+          <option value="bt">BT — 4.99% fix 2 ani, apoi IRCC+2.5% (marjă estimată)</option>
+          <option value="raiffeisen-verde">Raiffeisen verde — 4.7% fix 3 ani, apoi IRCC+2.5% (est., clasă energetică A)</option>
           <option value="custom">Personalizat</option>
         </select>
       </label>
@@ -403,9 +408,16 @@ footer a { color: var(--accent); }
 /* ====================== presets ====================== */
 
 const BANK_PRESETS = {
-  "bcr-standard": { fixedRate: 6.19, fixedYears: 3, margin: 3.5 },
-  "bcr-max":      { fixedRate: 4.99, fixedYears: 3, margin: 2.3 },
-  "bcr-natura":   { fixedRate: 4.79, fixedYears: 3, margin: 2.1 },
+  // surse: bcr.ro, ing.ro, finzoom.ro, credite.cc, bancatransilvania.ro (iunie 2026);
+  // unde marja post-fix nu e publicată, e estimată și marcată ca atare în etichetă
+  "bcr-standard":     { fixedRate: 6.19, fixedYears: 3, margin: 3.5 },
+  "bcr-max":          { fixedRate: 4.99, fixedYears: 3, margin: 2.3 },
+  "bcr-natura":       { fixedRate: 4.79, fixedYears: 3, margin: 2.1 },
+  "ing-var":          { fixedRate: 7.13, fixedYears: 0, margin: 1.55 }, // variabilă din prima zi
+  "ing-fix5":         { fixedRate: 5.95, fixedYears: 5, margin: 2.0 },
+  "cec":              { fixedRate: 5.95, fixedYears: 5, margin: 2.5 },
+  "bt":               { fixedRate: 4.99, fixedYears: 2, margin: 2.5 },
+  "raiffeisen-verde": { fixedRate: 4.70, fixedYears: 3, margin: 2.5 },
 };
 
 const MIN_DOWN_PCT = 15; // avans minim uzual la creditele ipotecare standard
