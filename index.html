@@ -38,7 +38,7 @@ header p { margin: 0; opacity: 0.85; }
 main {
   max-width: 1100px;
   margin: 0 auto;
-  padding: 20px 16px 60px;
+  padding: 20px 16px 120px; /* loc pentru bara fixă de rezultate */
   display: flex;
   flex-direction: column;
   gap: 20px;
@@ -182,6 +182,37 @@ footer a { color: var(--accent); }
 }
 .snap-actions button:hover { border-color: var(--accent); color: var(--accent); }
 .snap-actions button.danger:hover { border-color: var(--red); color: var(--red); }
+
+/* ---------- bara fixă cu rezultate live ---------- */
+.sticky-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 4px 22px;
+  padding: 8px 12px calc(8px + env(safe-area-inset-bottom));
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(8px);
+  border-top: 1px solid var(--border);
+  box-shadow: 0 -4px 16px rgba(28, 35, 51, 0.06);
+}
+.sb-item { text-align: center; min-width: 92px; padding: 2px 6px; border-radius: 8px; }
+.sb-label {
+  display: block;
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+}
+.sb-value { font-weight: 700; font-size: 0.95rem; }
+.sb-item.winner .sb-value { color: var(--green); }
+.sb-item.winner .sb-value::after { content: " ★"; font-size: 0.7rem; }
+.sb-item.flash { animation: sbflash 0.7s ease; }
+@keyframes sbflash { 0% { background: #dbeafe; } 100% { background: transparent; } }
 </style>
 <script>/* Chart.js v4.4.3 (MIT) — inclus local ca fișierul să meargă offline, de oriunde */
 /**
@@ -363,6 +394,8 @@ footer a { color: var(--accent); }
     <p><strong>Disclaimer:</strong> instrument educațional, nu consultanță financiară. Randamentul S&P 500 e o medie istorică — anii reali variază puternic (−37% în 2008, +31% în 2019). Dobânda variabilă (IRCC) se poate mișca în ambele direcții. Surse dobânzi: <a href="https://www.bcr.ro/ro/persoane-fizice/credite/credite-pentru-casa/casa-mea-bcr" target="_blank">BCR Casa Mea</a>, <a href="https://www.cursbnr.ro/ircc" target="_blank">IRCC — CursBNR</a> (iunie 2026).</p>
   </footer>
 </main>
+
+<div id="stickyBar" class="sticky-bar" aria-live="polite"></div>
 
 <script>
 "use strict";
@@ -591,6 +624,7 @@ function render() {
     $("verdict").innerHTML = "";
     ["netWorthChart", "balanceChart"].forEach(id => { if (charts[id]) { charts[id].destroy(); delete charts[id]; } });
     renderSweepChart(p, fmt, Math.round(p.downPct * 100));
+    renderStickyBar(null);
     return;
   }
   warning.classList.add("hidden");
@@ -628,6 +662,17 @@ function render() {
     const r = simulate({ ...p, mixPct: mp / 100 }, "mix");
     if (r.feasible && (!bestMix || r.finalNetWorth > bestMix.netWorth)) bestMix = { mp, netWorth: r.finalNetWorth };
   }
+
+  // ---------- bara fixă live ----------
+  const compact = (v) => new Intl.NumberFormat("ro-RO", { notation: "compact", maximumFractionDigits: 1 }).format(v);
+  const maxNW = Math.max(invest.finalNetWorth, prepay.finalNetWorth, mixR.finalNetWorth);
+  renderStickyBar([
+    { label: "Rată lunară", value: fmt(invest.payment0) },
+    { label: "100% S&P", value: compact(invest.finalNetWorth), winner: invest.finalNetWorth === maxNW },
+    { label: `Mix ${mixPctInt}% antic.`, value: compact(mixR.finalNetWorth), winner: mixR.finalNetWorth === maxNW },
+    { label: "100% anticipate", value: compact(prepay.finalNetWorth), winner: prepay.finalNetWorth === maxNW },
+    { label: "Avans optim", value: best ? `${best.downPct}%` : "—" },
+  ]);
 
   const bestLine = best
     ? (best.downPct === currentPct
@@ -677,6 +722,23 @@ function render() {
     },
     options: chartOpts(cur, "ani"),
   });
+}
+
+// bara fixă din josul ecranului: rezultatele cheie, vizibile în timp ce miști sliderele;
+// valorile care tocmai s-au schimbat primesc un flash scurt
+const lastSticky = {};
+function renderStickyBar(items) {
+  const bar = $("stickyBar");
+  if (!items) {
+    bar.innerHTML = `<div class="sb-item"><span class="sb-value">⚠️ Configurație nefezabilă</span></div>`;
+    return;
+  }
+  bar.innerHTML = items.map(it => {
+    const changed = lastSticky[it.label] !== undefined && lastSticky[it.label] !== it.value;
+    lastSticky[it.label] = it.value;
+    return `<div class="sb-item${it.winner ? " winner" : ""}${changed ? " flash" : ""}">
+      <span class="sb-label">${it.label}</span><span class="sb-value">${it.value}</span></div>`;
+  }).join("");
 }
 
 // randează graficul „avere netă vs avans" și întoarce nivelul optim de avans (sau null)
